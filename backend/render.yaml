@@ -18,3 +18,5 @@ services:
         value: https://masterchibuike.vercel.app
       - key: PORT
         value: 3000
+      - key: ADMIN_SECRET
+        sync: false

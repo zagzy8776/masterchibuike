@@ -1,11 +1,12 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useInView } from "../hooks/useInView";
-import { Upload, X, Camera, Loader2, CheckCircle2 } from "lucide-react";
+import { Upload, X, Camera, Loader2, CheckCircle2, Trash2 } from "lucide-react";
 import {
   fetchGallery,
   postGalleryPhoto,
   uploadToCloudinary,
+  deleteGalleryPhoto,
   type GalleryPhoto,
 } from "../../utils/api";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
@@ -23,6 +24,9 @@ export function FamilyGallery() {
   const [preview, setPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [lightboxPhoto, setLightboxPhoto] = useState<GalleryPhoto | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [adminMode, setAdminMode] = useState(false);
+  const [adminToken, setAdminToken] = useState("");
 
   const [form, setForm] = useState({ name: "", relation: "", caption: "" });
   const [showForm, setShowForm] = useState(false);
@@ -352,7 +356,7 @@ export function FamilyGallery() {
                   className="w-full max-h-[70vh] object-contain"
                 />
               </div>
-              <div className="mt-4 flex items-start gap-3">
+              <div className="mt-4 flex items-start justify-between gap-3">
                 <div>
                   <p style={{ fontFamily: "'Playfair Display', serif", color: "#f5ede0", fontWeight: 600, fontSize: "1rem" }}>
                     {lightboxPhoto.name}
@@ -366,7 +370,50 @@ export function FamilyGallery() {
                     </p>
                   )}
                 </div>
+
+                {/* Admin delete — hidden unless admin mode is active */}
+                {adminMode && (
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!confirm("Delete this photo?")) return;
+                      setDeleting(true);
+                      try {
+                        await deleteGalleryPhoto(lightboxPhoto.id, adminToken);
+                        setPhotos((prev) => prev.filter((p) => p.id !== lightboxPhoto.id));
+                        setLightboxPhoto(null);
+                      } catch (err) {
+                        alert("Failed to delete: " + (err instanceof Error ? err.message : "Unknown error"));
+                      } finally {
+                        setDeleting(false);
+                      }
+                    }}
+                    disabled={deleting}
+                    className="flex items-center gap-2 px-3 py-1.5 border border-red-500/40 hover:border-red-500 hover:bg-red-500/10 transition-all"
+                    style={{ fontFamily: "'Cinzel', serif", color: "#ef4444", fontSize: "0.6rem", letterSpacing: "0.2em" }}
+                  >
+                    {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                    DELETE
+                  </button>
+                )}
               </div>
+
+              {/* Admin unlock (hidden — double-click the title to show) */}
+              {!adminMode && (
+                <button
+                  onClick={() => {
+                    const token = prompt("Enter admin token to enable photo deletion:");
+                    if (token) {
+                      setAdminToken(token);
+                      setAdminMode(true);
+                    }
+                  }}
+                  className="mt-2 opacity-0 hover:opacity-100 transition-opacity"
+                  style={{ fontFamily: "'Cinzel', serif", color: "#a08060", fontSize: "0.5rem", letterSpacing: "0.2em" }}
+                >
+                  ⚙️
+                </button>
+              )}
             </motion.div>
           </motion.div>
         )}

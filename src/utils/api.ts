@@ -82,6 +82,21 @@ export async function postGalleryPhoto(data: {
   });
 }
 
+// Delete a photo — requires admin token (set in Render env vars)
+export async function deleteGalleryPhoto(id: number, adminToken: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/gallery/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-token": adminToken,
+    },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || "Failed to delete photo");
+  }
+}
+
 // ── Cloudinary upload ──────────────────────────────────────────────
 
 export async function uploadToCloudinary(file: File): Promise<{ secure_url: string; public_id: string }> {

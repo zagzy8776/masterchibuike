@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { sql } from "../db.js";
 
 const router = Router();
+const ADMIN_SECRET = process.env.ADMIN_SECRET || "admin123"; // Change this!
 
 // GET all gallery photos
 router.get("/", async (_req: Request, res: Response) => {
@@ -44,12 +45,19 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-// DELETE a photo (simple — no auth, protect with a secret param if needed)
+// DELETE a photo (protected by admin secret token)
 router.delete("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
+  const token = req.headers["x-admin-token"];
+
+  if (token !== ADMIN_SECRET) {
+    res.status(403).json({ error: "Unauthorized" });
+    return;
+  }
+
   try {
     await sql`DELETE FROM gallery_photos WHERE id = ${Number(id)}`;
-    res.json({ success: true });
+    res.json({ success: true, message: "Photo deleted" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to delete photo" });
