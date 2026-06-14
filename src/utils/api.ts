@@ -94,7 +94,7 @@ export async function uploadToCloudinary(file: File): Promise<{ secure_url: stri
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-  formData.append("folder", "chibuike-dedication");
+  formData.append("folder", "master-chibuike");
 
   const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
     method: "POST",
